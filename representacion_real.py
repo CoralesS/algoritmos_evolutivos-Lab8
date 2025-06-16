@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 df = pd.read_csv('notas_1u.csv')
 alumnos = df['Alumno'].tolist()
@@ -95,11 +96,32 @@ def mutacion(cromosoma):
     
     return cromosoma_mutado
 
+
+def mutacion_gaussiana(cromosoma, sigma=0.1):
+    cromosoma_mutado = cromosoma.copy()
+    
+    # Mutación de cada alumno
+    for i in range(39):
+        idx = i * 3
+        
+        mutacion = [random.gauss(0, sigma) for _ in range(3)]
+        cromosoma_mutado[idx:idx+3] = [cromosoma_mutado[idx+j] + mutacion[j] for j in range(3)]
+        cromosoma_mutado[idx:idx+3] = [max(0, c) for c in cromosoma_mutado[idx:idx+3]]
+        suma = sum(cromosoma_mutado[idx:idx+3])
+        
+        if suma > 0:
+            cromosoma_mutado[idx:idx+3] = [c / suma for c in cromosoma_mutado[idx:idx+3]]
+        else:
+            cromosoma_mutado[idx:idx+3] = [1/3, 1/3, 1/3]  
+    
+    return cromosoma_mutado
+
 def algoritmo_genetico(generaciones=150, tam_poblacion=100):
     poblacion = [crear_cromosoma() for _ in range(tam_poblacion)]
     
     mejor_global_fitness = float('-inf')
     mejor_global_cromosoma = None
+    fitness_evolution = []  # Lista para guardar la evolución del fitness
     
     for gen in range(generaciones):
         fitness_scores = [(crom, calcular_fitness(crom)) for crom in poblacion]
@@ -108,6 +130,8 @@ def algoritmo_genetico(generaciones=150, tam_poblacion=100):
         if fitness_scores[0][1] > mejor_global_fitness:
             mejor_global_fitness = fitness_scores[0][1]
             mejor_global_cromosoma = fitness_scores[0][0].copy()
+        
+        fitness_evolution.append(mejor_global_fitness)  # Guardar el mejor fitness en cada generación
         
         nueva_poblacion = []
         
@@ -128,14 +152,10 @@ def algoritmo_genetico(generaciones=150, tam_poblacion=100):
         if gen % 30 == 0:
             print(f"Generación {gen}: Mejor fitness = {fitness_scores[0][1]:.4f}")
     
-    return mejor_global_cromosoma
+    return mejor_global_cromosoma, fitness_evolution
 
-print("REPRESENTACIÓN REAL")
-print("Problema: Optimizar distribución de alumnos usando pesos probabilísticos")
-print("Cromosoma: 117 valores reales (39 alumnos × 3 pesos normalizados)")
-print("Gen: [0.2, 0.5, 0.3] representa probabilidades para exámenes A, B, C\n")
-
-mejor_solucion = algoritmo_genetico()
+# Ejecutar el algoritmo genético
+mejor_solucion, fitness_evolution = algoritmo_genetico()
 asignaciones_finales = decodificar_cromosoma(mejor_solucion)
 
 print("\nDistribución optimizada:")
@@ -158,3 +178,27 @@ for examen in ['A', 'B', 'C']:
 print(f"Promedios por examen: A={promedios[0]:.2f}, B={promedios[1]:.2f}, C={promedios[2]:.2f}")
 print(f"Desviación estándar entre promedios: {np.std(promedios):.4f}")
 print(f"Diferencia máxima entre promedios: {max(promedios) - min(promedios):.2f}")
+
+
+# Gráfica de la evolución del fitness por generación
+plt.figure(figsize=(10, 6))
+plt.plot(fitness_evolution, label='Fitness Evolución')
+plt.title('Evolución del Fitness por Generación')
+plt.xlabel('Generación')
+plt.ylabel('Fitness')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Gráficas de histogramas de notas por examen
+for examen in ['A', 'B', 'C']:
+    indices = asignaciones_finales[examen]
+    notas_examen = [notas[i] for i in indices]
+    
+    plt.figure(figsize=(10, 6))
+    plt.hist(notas_examen, bins=10, edgecolor='black')
+    plt.title(f'Histograma de Notas para Examen {examen}')
+    plt.xlabel('Nota')
+    plt.ylabel('Frecuencia')
+    plt.grid(True)
+    plt.show()

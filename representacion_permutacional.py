@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 df = pd.read_csv('notas_1u.csv')
 alumnos = df['Alumno'].tolist()
@@ -30,6 +31,7 @@ def calcular_fitness(cromosoma):
     
     desv_promedios = np.std(list(promedios.values()))
     
+    # Bonus por diversidad (si la diferencia entre la nota máxima y mínima es mayor a 5)
     bonus_diversidad = 0
     for examen in ['A', 'B', 'C']:
         indices = asignaciones[examen]
@@ -37,8 +39,24 @@ def calcular_fitness(cromosoma):
         if max(notas_examen) - min(notas_examen) > 5:
             bonus_diversidad += 0.1
     
-    fitness = -desv_promedios + bonus_diversidad
+    # Restricción: No todos los alumnos con notas < 11 pueden estar en el mismo examen
+    alumnos_bajos = [i for i, nota in enumerate(notas) if nota < 11]
+    
+    penalizacion_restriccion = 0
+    for examen in ['A', 'B', 'C']:
+        indices = asignaciones[examen]
+
+        if all(alumno in indices for alumno in alumnos_bajos):
+            penalizacion_restriccion += 1  # Penaliza si todos están en el mismo examen
+    
+    # Penalizamos el fitness si se ha violado la restricción
+    if penalizacion_restriccion > 0:
+        fitness = -desv_promedios + bonus_diversidad - 1000 * penalizacion_restriccion  # Penalización fuerte
+    else:
+        fitness = -desv_promedios + bonus_diversidad
+    
     return fitness
+
 
 def cruce_pmx(padre1, padre2):
     size = len(padre1)
@@ -121,7 +139,7 @@ def algoritmo_genetico(generaciones=50, tam_poblacion=30):
 print("REPRESENTACIÓN PERMUTACIONAL")
 print("Problema: Secuenciar alumnos para asignación ordenada a exámenes")
 print("Cromosoma: Permutación de 39 índices de alumnos")
-print("Decodificación: Posiciones [0-12] → Examen A, [13-25] → Examen B, [26-38] → Examen C\n")
+print("Decodificación: Posiciones [0-12] -> Examen A, [13-25] -> Examen B, [26-38] -> Examen C\n")
 
 mejor_solucion, historial = algoritmo_genetico()
 asignaciones_finales = decodificar_cromosoma(mejor_solucion)
@@ -158,4 +176,28 @@ print(f"Fitness final: {historial[-1]:.4f}")
 print(f"Mejora total: {((historial[-1] - historial[0]) / abs(historial[0]) * 100):.1f}%")
 
 
-#
+def plot_fitness_evolution(historial_fitness):
+    plt.plot(historial_fitness)
+    plt.xlabel('Generaciones')
+    plt.ylabel('Fitness')
+    plt.title('Evolución del Fitness por Generación')
+    plt.show()
+
+def plot_histogram(notas, examen_label):
+    plt.hist(notas, bins=10, alpha=0.7, color='blue', edgecolor='black')
+    plt.title(f'Histograma de Notas para {examen_label}')
+    plt.xlabel('Nota')
+    plt.ylabel('Número de Alumnos')
+    plt.show()
+
+# Ejecución de tu algoritmo genético
+mejor_solucion, historial = algoritmo_genetico()
+asignaciones_finales = decodificar_cromosoma(mejor_solucion)
+
+# Gráfica de la evolución del fitness
+plot_fitness_evolution(historial)
+
+# Mostrar los histogramas de notas para cada examen
+plot_histogram([notas[i] for i in asignaciones_finales['A']], 'Examen A')
+plot_histogram([notas[i] for i in asignaciones_finales['B']], 'Examen B')
+plot_histogram([notas[i] for i in asignaciones_finales['C']], 'Examen C')

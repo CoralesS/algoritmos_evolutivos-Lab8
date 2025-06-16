@@ -10,19 +10,19 @@ notas = df['Nota'].tolist()
 def crear_cromosoma():
     cromosoma = []
     for i in range(39):
-        examen = random.randint(0, 2)
-        genes = [0, 0, 0]
+        examen = random.randint(0, 3)  # Ahora 4 exámenes
+        genes = [0, 0, 0, 0]
         genes[examen] = 1
         cromosoma.extend(genes)
     return cromosoma
 
 def decodificar_cromosoma(cromosoma):
-    asignaciones = {'A': [], 'B': [], 'C': []}
-    examenes = ['A', 'B', 'C']
+    asignaciones = {'A': [], 'B': [], 'C': [], 'D': []} 
+    examenes = ['A', 'B', 'C', 'D']  
     
     for i in range(39):
-        idx = i * 3
-        for j in range(3):
+        idx = i * 4  # Cada alumno tiene 4 genes
+        for j in range(4):
             if cromosoma[idx + j] == 1:
                 asignaciones[examenes[j]].append(i)
                 break
@@ -32,22 +32,21 @@ def decodificar_cromosoma(cromosoma):
 def calcular_fitness(cromosoma):
     asignaciones = decodificar_cromosoma(cromosoma)
     
-    # Penalización si no hay 13 alumnos por examen
-    if any(len(asignaciones[ex]) != 13 for ex in ['A', 'B', 'C']):
+    # Penalización si no hay 10 alumnos por examen
+    if any(len(asignaciones[ex]) != 10 for ex in ['A', 'B', 'C', 'D']):
         return -1000
     
-    # Calcular la media de las notas por examen
     promedios = {}
     desviaciones = {}
-    for examen in ['A', 'B', 'C']:
+    for examen in ['A', 'B', 'C', 'D']:
         indices = asignaciones[examen]
         notas_examen = [notas[i] for i in indices]
         promedios[examen] = np.mean(notas_examen)
         desviaciones[examen] = np.std(notas_examen)
     
-    penalizacion_variacion = sum([desviaciones[ex] for ex in ['A', 'B', 'C']])
+    penalizacion_variacion = sum([desviaciones[ex] for ex in ['A', 'B', 'C', 'D']])
 
-    diversidad = np.std([promedios[ex] for ex in ['A', 'B', 'C']])
+    diversidad = np.std([promedios[ex] for ex in ['A', 'B', 'C', 'D']])
     
     return -(penalizacion_variacion - diversidad)
 
@@ -58,17 +57,17 @@ def mutacion(cromosoma):
     alumno1 = random.randint(0, 38)
     alumno2 = random.randint(0, 38)
     
-    idx1 = alumno1 * 3
-    idx2 = alumno2 * 3
+    idx1 = alumno1 * 4
+    idx2 = alumno2 * 4
     
-    examen1 = [i for i in range(3) if cromosoma_mutado[idx1 + i] == 1][0]
-    examen2 = [i for i in range(3) if cromosoma_mutado[idx2 + i] == 1][0]
+    examen1 = [i for i in range(4) if cromosoma_mutado[idx1 + i] == 1][0]
+    examen2 = [i for i in range(4) if cromosoma_mutado[idx2 + i] == 1][0]
     
     if examen1 != examen2:
-        cromosoma_mutado[idx1:idx1+3] = [0, 0, 0]
+        cromosoma_mutado[idx1:idx1+4] = [0, 0, 0, 0]
         cromosoma_mutado[idx1 + examen2] = 1
         
-        cromosoma_mutado[idx2:idx2+3] = [0, 0, 0]
+        cromosoma_mutado[idx2:idx2+4] = [0, 0, 0, 0]
         cromosoma_mutado[idx2 + examen1] = 1
     
     return cromosoma_mutado
@@ -105,15 +104,15 @@ def algoritmo_genetico(generaciones=100, tam_poblacion=50):
     return mejor_cromosoma, fitness_evolution
 
 print("REPRESENTACIÓN BINARIA")
-print("Problema: Distribuir 39 alumnos en 3 exámenes (A, B, C) de forma equitativa")
-print("Cromosoma: 117 bits (39 alumnos × 3 bits cada uno)")
-print("Gen: [0,1,0] significa alumno asignado a examen B\n")
+print("Problema: Distribuir 39 alumnos en 4 exámenes (A, B, C, D) de forma equitativa")
+print("Cromosoma: 156 bits (39 alumnos × 4 bits cada uno)")  # 3 bits por 4 bits
+print("Gen: [0,0,1,0] significa alumno asignado a examen C\n") 
 
 mejor_solucion, fitness_evolution = algoritmo_genetico()
 asignaciones_finales = decodificar_cromosoma(mejor_solucion)
 
 print("\nDistribución final:")
-for examen in ['A', 'B', 'C']:
+for examen in ['A', 'B', 'C', 'D']:
     indices = asignaciones_finales[examen]
     notas_examen = [notas[i] for i in indices]
     promedio = np.mean(notas_examen)
@@ -122,7 +121,7 @@ for examen in ['A', 'B', 'C']:
 
 print("\nVerificación de equilibrio:")
 promedios = []
-for examen in ['A', 'B', 'C']:
+for examen in ['A', 'B', 'C', 'D']:
     indices = asignaciones_finales[examen]
     notas_examen = [notas[i] for i in indices]
     promedios.append(np.mean(notas_examen))
@@ -139,7 +138,7 @@ plt.grid(True)
 plt.show()
 
 # Gráficas de histogramas de notas por examen
-for examen in ['A', 'B', 'C']:
+for examen in ['A', 'B', 'C', 'D']:
     indices = asignaciones_finales[examen]
     notas_examen = [notas[i] for i in indices]
     
@@ -150,3 +149,5 @@ for examen in ['A', 'B', 'C']:
     plt.ylabel('Frecuencia')
     plt.grid(True)
     plt.show()
+
+

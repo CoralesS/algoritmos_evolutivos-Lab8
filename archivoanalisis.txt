@@ -1,0 +1,22 @@
+
+ANALISIS COMPARATIVO
+
+*¿Cuál representación logra mejor equilibrio entre los grupos?
+--------------------------------------------------------------
+La representación permutacional porque distribuye 13 alumnos por
+examen y mantiene los promedios de cada examen muy cercanos 
+(Examen A = 15.38, Examen B = 15.46, Examen C = 15.38) Además, 
+la desviación estándar entre los promedios es 0.0363, lo que refleja 
+que las calificaciones están muy. Aunque la representación real también 
+distribuye a los alumnos de manera equitativa, la representación permutacional
+destaca por su rápida convergencia en la Generación 0, mientras que la
+representación real tiene una convergencia más lenta y un fitness final negativo.
+
+*¿Cuál converge más rápido? (observa las generaciones)
+----------------------------------------------------------
+La representación permutacional converge más rápido, ya que el fitness se mantiene
+constante en 0.2637 desde la Generación 0, lo que indica que el algoritmo encontró
+una solución estable desde el inicio y no requiere más generaciones para mejorar. 
+
+
+
